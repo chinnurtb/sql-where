@@ -15,8 +15,8 @@ search_cond -> predicate : '$1'.
 predicate -> comparsion_pred : '$1'.
 predicate -> in_pred : '$1'.
 
-comparsion_pred -> scalar_exp comp scalar_exp : {value('$2'), '$1', '$3'}.
-comparsion_pred -> scalar_exp '=' scalar_exp : {'=', '$1', '$3'}.
+comparsion_pred -> scalar_exp comp scalar_exp : {comp, value('$2'), '$1', '$3'}.
+comparsion_pred -> scalar_exp '=' scalar_exp : {comp, '=', '$1', '$3'}.
 
 in_pred -> scalar_exp 'not' in '(' atom_commalist ')' : {notin, '$1', '$5'}.
 in_pred -> scalar_exp in '(' atom_commalist ')' : {in, '$1', '$4'}.
