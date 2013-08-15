@@ -1,6 +1,7 @@
 % TODO: complete unit tests
 
 -module(sql_where).
+-compile([native]).
 
 -export([
     evaluate/2,
@@ -8,16 +9,16 @@
 ]).
 
 %% public
-evaluate({'and', A, B}, Proplist) ->
-    evaluate(A, Proplist) andalso evaluate(B, Proplist);
-evaluate({'or', A, B}, Proplist) ->
-    evaluate(A, Proplist) orelse evaluate(B, Proplist);
-evaluate({comp, Comp, Var, Value}, Proplist) ->
-    compare(Comp, Var, Value, Proplist);
-evaluate({in, Var, List}, Proplist) ->
-    lists:member(lookup(Var, Proplist), List);
-evaluate({notin, Var, List}, Proplist) ->
-    not lists:member(lookup(Var, Proplist), List).
+evaluate({'and', A, B}, Vars) ->
+    evaluate(A, Vars) andalso evaluate(B, Vars);
+evaluate({'or', A, B}, Vars) ->
+    evaluate(A, Vars) orelse evaluate(B, Vars);
+evaluate({comp, Comp, Var, Value}, Vars) ->
+    compare(Comp, Var, Value, Vars);
+evaluate({in, Var, List}, Vars) ->
+    lists:member(lookup(Var, Vars), List);
+evaluate({notin, Var, List}, Vars) ->
+    not lists:member(lookup(Var, Vars), List).
 
 parse(String) when is_binary(String) ->
     parse(binary_to_list(String));
@@ -32,8 +33,8 @@ parse(String) when is_list(String) ->
     end.
 
 %% private
-compare(Comp, Var, Value, Proplist) ->
-    comp(Comp, lookup(Var, Proplist), Value).
+compare(Comp, Var, Value, Vars) ->
+    comp(Comp, lookup(Var, Vars), Value).
 
 comp('=', Var, Value) ->
     Var =:= Value;
@@ -61,22 +62,29 @@ lookup(Key, List) ->
 benchmark_test() ->
     {ok, Tree} = parse("WHERE exchange_id = 1 AND exchange_seller_id = 181 AND bidder_id IN (1, 5) AND buyer_spend > 150"),
 
-    Proplist = [
+    Vars = [
         {exchange_id, 1},
         {exchange_seller_id, 181},
         {bidder_id, 1},
         {buyer_spend, 200}
     ],
 
-    FunEvaluate = fun() -> evaluate(Tree, Proplist) end,
+    FunEvaluate = fun() -> evaluate(Tree, Vars) end,
     benchmark(evaluate, FunEvaluate, 100000).
 
 evaluate_test() ->
     ?assert(evaluate({comp, '=', bidder_id, 1}, [{bidder_id, 1}])),
     ?assertNot(evaluate({comp, '=', bidder_id, 1}, [{bidder_id, 2}])),
+    ?assert(evaluate({comp, '<', price, 100}, [{price, 60}])),
+    ?assertNot(evaluate({comp, '<', price, 100}, [{price, 160}])),
+    ?assert(evaluate({comp, '<=', price, 100}, [{price, 100}])),
+    ?assertNot(evaluate({comp, '<=', price, 100}, [{price, 160}])),
     ?assert(evaluate({comp, '>', price, 100}, [{price, 160}])),
     ?assertNot(evaluate({comp, '>', price, 100}, [{price, 60}])),
-    ?assert(evaluate({in, exchange_id, [1 , 2]}, [{exchange_id, 2}])).
+    ?assert(evaluate({in, exchange_id, [1 , 2]}, [{exchange_id, 2}])),
+    ?assertNot(evaluate({in, exchange_id, [1 , 2]}, [{exchange_id, 3}])),
+    ?assert(evaluate({notin, exchange_id, [1 , 2]}, [{exchange_id, 3}])),
+    ?assertNot(evaluate({notin, exchange_id, [1 , 2]}, [{exchange_id, 2}])).
 
 parse_test() ->
     assert_parse({comp, '=', bidder_id, 1}, "WHERE bidder_id = 1"),
