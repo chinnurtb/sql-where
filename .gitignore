@@ -1,5 +1,8 @@
 .eunit
 deps
+ebin
+src/sql_where_lexer.erl
+src/sql_where_parser.erl
 *.o
 *.beam
 *.plt
