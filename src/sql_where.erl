@@ -1,5 +1,3 @@
-% TODO: complete unit tests
-
 -module(sql_where).
 -compile([native]).
 
@@ -70,21 +68,40 @@ benchmark_test() ->
     ],
 
     FunEvaluate = fun() -> evaluate(Tree, Vars) end,
-    benchmark(evaluate, FunEvaluate, 100000).
+    benchmark(evaluate, FunEvaluate, 10000000).
 
 evaluate_test() ->
+    % comp predictate
     ?assert(evaluate({comp, '=', bidder_id, 1}, [{bidder_id, 1}])),
     ?assertNot(evaluate({comp, '=', bidder_id, 1}, [{bidder_id, 2}])),
     ?assert(evaluate({comp, '<', price, 100}, [{price, 60}])),
     ?assertNot(evaluate({comp, '<', price, 100}, [{price, 160}])),
     ?assert(evaluate({comp, '<=', price, 100}, [{price, 100}])),
     ?assertNot(evaluate({comp, '<=', price, 100}, [{price, 160}])),
+    ?assert(evaluate({comp, '>=', price, 100}, [{price, 100}])),
+    ?assertNot(evaluate({comp, '>=', price, 160}, [{price, 100}])),
     ?assert(evaluate({comp, '>', price, 100}, [{price, 160}])),
     ?assertNot(evaluate({comp, '>', price, 100}, [{price, 60}])),
+    ?assert(evaluate({comp, '<>', price, 100}, [{price, 160}])),
+    ?assertNot(evaluate({comp, '<>', price, 100}, [{price, 100}])),
+
+    % in predictate
     ?assert(evaluate({in, exchange_id, [1 , 2]}, [{exchange_id, 2}])),
     ?assertNot(evaluate({in, exchange_id, [1 , 2]}, [{exchange_id, 3}])),
     ?assert(evaluate({notin, exchange_id, [1 , 2]}, [{exchange_id, 3}])),
-    ?assertNot(evaluate({notin, exchange_id, [1 , 2]}, [{exchange_id, 2}])).
+    ?assertNot(evaluate({notin, exchange_id, [1 , 2]}, [{exchange_id, 2}])),
+
+    % and
+    ?assert(evaluate({'and', {comp, '=', bidder_id, 1}, {comp, '=', bidder_id, 1}},
+        [{bidder_id, 1}])),
+    ?assertNot(evaluate({'and', {comp, '=', bidder_id, 1}, {comp, '=', exchange_id, 1}},
+        [{bidder_id, 1}, {exchange_id, 2}])),
+
+    % or
+    ?assert(evaluate({'or', {comp, '=', bidder_id, 2}, {comp, '=', bidder_id, 1}},
+        [{bidder_id, 1}]))
+    ?assertNot(evaluate({'or', {comp, '=', bidder_id, 2}, {comp, '=', bidder_id, 3}},
+        [{bidder_id, 1}])).
 
 parse_test() ->
     assert_parse({comp, '=', bidder_id, 1}, "WHERE bidder_id = 1"),
