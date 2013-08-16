@@ -99,7 +99,7 @@ evaluate_test() ->
 
     % or
     ?assert(evaluate({'or', {comp, '=', bidder_id, 2}, {comp, '=', bidder_id, 1}},
-        [{bidder_id, 1}]))
+        [{bidder_id, 1}])),
     ?assertNot(evaluate({'or', {comp, '=', bidder_id, 2}, {comp, '=', bidder_id, 3}},
         [{bidder_id, 1}])).
 
