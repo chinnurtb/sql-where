@@ -1,4 +1,4 @@
-Nonterminals where_clause search_cond predicate comparsion_pred in_pred
+Nonterminals where_clause search_cond search_cond2 search_cond3 search_cond4 predicate comparsion_pred in_pred
 test_for_null_pred atom_commalist scalar_exp column_ref atom literal.
 
 Terminals comp int '(' ')' '=' ',' string 'and' in is 'not' null 'or' where var.
@@ -7,10 +7,16 @@ Rootsymbol where_clause.
 
 where_clause -> where search_cond : '$2'.
 
-search_cond -> search_cond 'or' search_cond : {'or', '$1', '$3'}.
-search_cond -> search_cond 'and' search_cond : {'and', '$1', '$3'}.
-search_cond -> '(' search_cond ')' : '$2'.
-search_cond -> predicate : '$1'.
+search_cond -> search_cond2 'or' search_cond : {'or', '$1', '$3'}.
+search_cond -> search_cond2 : '$1'.
+
+search_cond2 -> search_cond3 'and' search_cond2 : {'and', '$1', '$3'}.
+search_cond2 -> search_cond3 : '$1'.
+
+search_cond3 -> '(' search_cond ')' : '$2'.
+search_cond3 -> search_cond4 : '$1'.
+
+search_cond4 -> predicate : '$1'.
 
 predicate -> comparsion_pred : '$1'.
 predicate -> in_pred : '$1'.
