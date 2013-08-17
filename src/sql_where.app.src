@@ -1,5 +1,5 @@
 {application, sql_where, [
-  {vsn, "0.1"},
+  {vsn, "0.1.1"},
   {registered, []},
   {applications, [
     kernel,
