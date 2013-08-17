@@ -29,7 +29,9 @@ quoted_bitstring(TokenChars, TokenLen) ->
 
 reserved_word('and') -> true;
 reserved_word('in') -> true;
+reserved_word('is') -> true;
 reserved_word('not') -> true;
+reserved_word('null') -> true;
 reserved_word('or') -> true;
 reserved_word('where') -> true;
 reserved_word(_) -> false.

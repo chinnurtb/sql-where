@@ -6,6 +6,8 @@
     parse/1
 ]).
 
+-define(NULL, undefined).
+
 %% public
 evaluate({'and', A, B}, Vars) ->
     evaluate(A, Vars) andalso evaluate(B, Vars);
@@ -16,7 +18,12 @@ evaluate({comp, Comp, Var, Value}, Vars) ->
 evaluate({in, Var, List}, Vars) ->
     lists:member(lookup(Var, Vars), List);
 evaluate({notin, Var, List}, Vars) ->
-    not lists:member(lookup(Var, Vars), List).
+    not lists:member(lookup(Var, Vars), List);
+evaluate({null, Var}, Vars) ->
+    lookup(Var, Vars) =:= ?NULL;
+evaluate({notnull, Var}, Vars) ->
+    lookup(Var, Vars) =/= ?NULL.
+
 
 parse(String) when is_binary(String) ->
     parse(binary_to_list(String));
@@ -49,7 +56,7 @@ comp('<>', Var, Value) ->
 
 lookup(Key, List) ->
     case lists:keyfind(Key, 1, List) of
-        false -> undefined;
+        false -> ?NULL;
         {_, Value} -> Value
     end.
 
@@ -90,6 +97,12 @@ evaluate_test() ->
     ?assertNot(evaluate({in, exchange_id, [1 , 2]}, [{exchange_id, 3}])),
     ?assert(evaluate({notin, exchange_id, [1 , 2]}, [{exchange_id, 3}])),
     ?assertNot(evaluate({notin, exchange_id, [1 , 2]}, [{exchange_id, 2}])),
+
+    % null predictate
+    ?assert(evaluate({null, exchange_id}, [])),
+    ?assertNot(evaluate({null, exchange_id}, [{exchange_id, 3}])),
+    ?assert(evaluate({notnull, exchange_id}, [{exchange_id, 3}])),
+    ?assertNot(evaluate({notnull, exchange_id}, [{exchange_id, ?NULL}])),
 
     % and
     ?assert(evaluate({'and', {comp, '=', bidder_id, 1}, {comp, '=', bidder_id, 1}},
