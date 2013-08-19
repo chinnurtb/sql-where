@@ -13,8 +13,18 @@ evaluate({'and', A, B}, Vars) ->
     evaluate(A, Vars) andalso evaluate(B, Vars);
 evaluate({'or', A, B}, Vars) ->
     evaluate(A, Vars) orelse evaluate(B, Vars);
-evaluate({comp, Comp, Var, Value}, Vars) ->
-    compare(Comp, Var, Value, Vars);
+evaluate({'<', Var, Value}, Vars) ->
+    lookup(Var, Vars) < Value;
+evaluate({'<=', Var, Value}, Vars) ->
+    lookup(Var, Vars) =< Value;
+evaluate({'=', Var, Value}, Vars) ->
+    lookup(Var, Vars) =:= Value;
+evaluate({'>=', Var, Value}, Vars) ->
+    lookup(Var, Vars) >= Value;
+evaluate({'>', Var, Value}, Vars) ->
+    lookup(Var, Vars) > Value;
+evaluate({'<>', Var, Value}, Vars) ->
+    lookup(Var, Vars) =/= Value;
 evaluate({in, Var, List}, Vars) ->
     lists:member(lookup(Var, Vars), List);
 evaluate({notin, Var, List}, Vars) ->
@@ -23,7 +33,6 @@ evaluate({null, Var}, Vars) ->
     lookup(Var, Vars) =:= ?NULL;
 evaluate({notnull, Var}, Vars) ->
     lookup(Var, Vars) =/= ?NULL.
-
 
 parse(String) when is_binary(String) ->
     parse(binary_to_list(String));
@@ -38,22 +47,6 @@ parse(String) when is_list(String) ->
     end.
 
 %% private
-compare(Comp, Var, Value, Vars) ->
-    comp(Comp, lookup(Var, Vars), Value).
-
-comp('=', Var, Value) ->
-    Var =:= Value;
-comp('<', Var, Value) ->
-    Var < Value;
-comp('<=', Var, Value) ->
-    Var =< Value;
-comp('>=', Var, Value) ->
-    Var >= Value;
-comp('>', Var, Value) ->
-    Var > Value;
-comp('<>', Var, Value) ->
-    Var =/= Value.
-
 lookup(Key, List) ->
     case lists:keyfind(Key, 1, List) of
         false -> ?NULL;
@@ -79,18 +72,18 @@ benchmark_test() ->
 
 evaluate_test() ->
     % comp predictate
-    ?assert(evaluate({comp, '=', bidder_id, 1}, [{bidder_id, 1}])),
-    ?assertNot(evaluate({comp, '=', bidder_id, 1}, [{bidder_id, 2}])),
-    ?assert(evaluate({comp, '<', price, 100}, [{price, 60}])),
-    ?assertNot(evaluate({comp, '<', price, 100}, [{price, 160}])),
-    ?assert(evaluate({comp, '<=', price, 100}, [{price, 100}])),
-    ?assertNot(evaluate({comp, '<=', price, 100}, [{price, 160}])),
-    ?assert(evaluate({comp, '>=', price, 100}, [{price, 100}])),
-    ?assertNot(evaluate({comp, '>=', price, 160}, [{price, 100}])),
-    ?assert(evaluate({comp, '>', price, 100}, [{price, 160}])),
-    ?assertNot(evaluate({comp, '>', price, 100}, [{price, 60}])),
-    ?assert(evaluate({comp, '<>', price, 100}, [{price, 160}])),
-    ?assertNot(evaluate({comp, '<>', price, 100}, [{price, 100}])),
+    ?assert(evaluate({'=', bidder_id, 1}, [{bidder_id, 1}])),
+    ?assertNot(evaluate({'=', bidder_id, 1}, [{bidder_id, 2}])),
+    ?assert(evaluate({'<', price, 100}, [{price, 60}])),
+    ?assertNot(evaluate({'<', price, 100}, [{price, 160}])),
+    ?assert(evaluate({'<=', price, 100}, [{price, 100}])),
+    ?assertNot(evaluate({'<=', price, 100}, [{price, 160}])),
+    ?assert(evaluate({'>=', price, 100}, [{price, 100}])),
+    ?assertNot(evaluate({'>=', price, 160}, [{price, 100}])),
+    ?assert(evaluate({'>', price, 100}, [{price, 160}])),
+    ?assertNot(evaluate({'>', price, 100}, [{price, 60}])),
+    ?assert(evaluate({'<>', price, 100}, [{price, 160}])),
+    ?assertNot(evaluate({'<>', price, 100}, [{price, 100}])),
 
     % in predictate
     ?assert(evaluate({in, exchange_id, [1 , 2]}, [{exchange_id, 2}])),
@@ -105,24 +98,24 @@ evaluate_test() ->
     ?assertNot(evaluate({notnull, exchange_id}, [{exchange_id, ?NULL}])),
 
     % and
-    ?assert(evaluate({'and', {comp, '=', bidder_id, 1}, {comp, '=', bidder_id, 1}},
+    ?assert(evaluate({'and', {'=', bidder_id, 1}, {'=', bidder_id, 1}},
         [{bidder_id, 1}])),
-    ?assertNot(evaluate({'and', {comp, '=', bidder_id, 1}, {comp, '=', exchange_id, 1}},
+    ?assertNot(evaluate({'and', {'=', bidder_id, 1}, {'=', exchange_id, 1}},
         [{bidder_id, 1}, {exchange_id, 2}])),
 
     % or
-    ?assert(evaluate({'or', {comp, '=', bidder_id, 2}, {comp, '=', bidder_id, 1}},
+    ?assert(evaluate({'or', {'=', bidder_id, 2}, {'=', bidder_id, 1}},
         [{bidder_id, 1}])),
-    ?assertNot(evaluate({'or', {comp, '=', bidder_id, 2}, {comp, '=', bidder_id, 3}},
+    ?assertNot(evaluate({'or', {'=', bidder_id, 2}, {'=', bidder_id, 3}},
         [{bidder_id, 1}])).
 
 parse_test() ->
-    assert_parse({comp, '=', bidder_id, 1}, "WHERE bidder_id = 1"),
-    assert_parse({comp, '=', domain, <<"ebay.ca">>}, "WHERE domain = 'ebay.ca'"),
-    assert_parse({comp, '=', domain, <<"ebay.ca">>}, "WHERE domain = \"ebay.ca\""),
+    assert_parse({'=', bidder_id, 1}, "WHERE bidder_id = 1"),
+    assert_parse({'=', domain, <<"ebay.ca">>}, "WHERE domain = 'ebay.ca'"),
+    assert_parse({'=', domain, <<"ebay.ca">>}, "WHERE domain = \"ebay.ca\""),
     assert_parse({in, exchange_id, [1, 2, 3]}, "WHERE exchange_id IN (1, 2, 3)"),
-    assert_parse({'and', {comp, '=', bidder_id, 1}, {'or', {notin, exchange_id, [1 , 2]},
-      {comp, '=', domain, <<"ebay.ca">>}}}, "WHERE bidder_id = 1 AND (exchange_id NOT IN (1, 2) OR domain = 'ebay.ca')").
+    assert_parse({'and', {'=', bidder_id, 1}, {'or', {notin, exchange_id, [1 , 2]},
+      {'=', domain, <<"ebay.ca">>}}}, "WHERE bidder_id = 1 AND (exchange_id NOT IN (1, 2) OR domain = 'ebay.ca')").
 
 %% test_utils
 assert_parse(Expected, Expression) ->
