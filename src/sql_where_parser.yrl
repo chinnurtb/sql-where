@@ -1,4 +1,4 @@
-Nonterminals select_clause select_fields select_from_tables where_clause search_cond search_cond2 search_cond3 search_cond4 predicate comparsion_pred in_pred
+Nonterminals select_clause select_fields select_from_tables where_clause search_cond search_cond2 search_cond3 search_cond4 predicate comparsion_pred in_pred and_clause
 test_for_null_pred atom_commalist scalar_exp column_ref atom literal.
 
 Terminals comp int '(' ')' '=' ',' string 'and' in is 'not' null 'or' select '*' from where var.
@@ -20,8 +20,11 @@ where_clause -> where search_cond : '$2'.
 search_cond -> search_cond2 'or' search_cond : {'or', '$1', '$3'}.
 search_cond -> search_cond2 : '$1'.
 
-search_cond2 -> search_cond3 'and' search_cond2 : {'and', '$1', '$3'}.
+search_cond2 -> search_cond3 and_clause search_cond2 : {'and', '$1', '$3'}.
 search_cond2 -> search_cond3 : '$1'.
+
+and_clause -> 'and' : 'and'.
+and_clause -> ',' : 'and'.
 
 search_cond3 -> '(' search_cond ')' : '$2'.
 search_cond3 -> search_cond4 : '$1'.

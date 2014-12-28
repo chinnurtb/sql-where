@@ -65,7 +65,7 @@ lookup(Key, List) ->
 
 %% tests
 benchmark_test() ->
-    {ok, Tree} = parse("WHERE exchange_id = 1 AND exchange_seller_id = 181 AND bidder_id IN (1, 5) AND buyer_spend > 150"),
+    {ok, Tree} = parse("WHERE exchange_id = 1, exchange_seller_id = 181, bidder_id IN (1, 5) AND buyer_spend > 150"),
 
     Vars = [
         {exchange_id, 1},
@@ -131,7 +131,7 @@ parse_select_test() ->
                   {from,['ads','users']},
                   {where,{'and', {comp, '=', 'ads.os', <<"ios">>},
                           {comp, '=', 'users.id', 1}}}},
-                 "select pacing, enabled from ads,users WHERE ads.os='ios' AND users.id = 1").
+                 "select pacing, enabled from ads,users WHERE ads.os='ios', users.id = 1").
 
 
 %% test_utils
