@@ -1,7 +1,7 @@
 Definitions.
 
 D   = [0-9]
-L   = [A-Za-z_][A-Za-z0-9_.]*
+L   = [A-Za-z_*][A-Za-z0-9_.]*
 WS  = ([\000-\s]|%.*)
 C   = (<|<=|>=|>|<>)
 P   = [()=,]
@@ -27,6 +27,9 @@ int(TokenChars) ->
 quoted_bitstring(TokenChars, TokenLen) ->
     list_to_bitstring(lists:sublist(TokenChars, 2, TokenLen - 2)).
 
+reserved_word('select') -> true;
+reserved_word('*') -> true;
+reserved_word('from') -> true;
 reserved_word('and') -> true;
 reserved_word('in') -> true;
 reserved_word('is') -> true;
