@@ -124,6 +124,16 @@ parse_test() ->
     assert_parse({'and', {comp, '=', bidder_id, 1}, {'or', {notin, exchange_id, [1 , 2]},
       {comp, '=', domain, <<"ebay.ca">>}}}, "WHERE bidder_id = 1 AND (exchange_id NOT IN (1, 2) OR domain = 'ebay.ca')").
 
+parse_select_test() ->
+    assert_parse({{select,'*'}, {from, 'bids'},{where,{comp, '=', bidder_id, 1}}}, "select * from bids WHERE bidder_id = 1"),
+    assert_parse({{select,'id'}, {from, 'bids'},{where,{comp, '=', bidder_id, 1}}}, "select id from bids WHERE bidder_id = 1"),
+    assert_parse({{select,['pacing','enabled']},
+                  {from,['ads','users']},
+                  {where,{'and', {comp, '=', 'ads.os', <<"ios">>},
+                          {comp, '=', 'users.id', 1}}}},
+                 "select pacing, enabled from ads,users WHERE ads.os='ios' AND users.id = 1").
+
+
 %% test_utils
 assert_parse(Expected, Expression) ->
     {ok, Tree} = parse(Expression),

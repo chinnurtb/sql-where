@@ -1,9 +1,19 @@
-Nonterminals where_clause search_cond search_cond2 search_cond3 search_cond4 predicate comparsion_pred in_pred
+Nonterminals select_clause select_fields select_from_tables where_clause search_cond search_cond2 search_cond3 search_cond4 predicate comparsion_pred in_pred
 test_for_null_pred atom_commalist scalar_exp column_ref atom literal.
 
-Terminals comp int '(' ')' '=' ',' string 'and' in is 'not' null 'or' where var.
+Terminals comp int '(' ')' '=' ',' string 'and' in is 'not' null 'or' select '*' from where var.
 
-Rootsymbol where_clause.
+Rootsymbol select_clause.
+
+select_clause -> 'select' select_fields 'from' select_from_tables where_clause: {{'select', '$2'}, {from,'$4'}, {where,'$5'}}.
+select_clause -> where search_cond : '$2'.
+
+select_fields -> '*' : '*'.
+select_fields -> scalar_exp : '$1'.
+select_fields -> scalar_exp ',' select_fields : flatten(['$1', '$3']).
+
+select_from_tables -> scalar_exp : '$1'.
+select_from_tables -> scalar_exp ',' select_from_tables : flatten(['$1','$3']).
 
 where_clause -> where search_cond : '$2'.
 
